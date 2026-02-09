@@ -1,0 +1,54 @@
+{
+  "name": "braindrain-cc",
+  "displayName": "BrainDrain CC",
+  "description": "Context window usage meter for Claude Code — always visible in your status bar",
+  "version": "0.2.0",
+  "publisher": "makingaipractical",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/makingaipractical/braindrain-cc"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "BrainDrain CC",
+      "properties": {
+        "braindrain-cc.pollInterval": {
+          "type": "number",
+          "default": 15,
+          "description": "How often to check for context updates (in seconds)"
+        },
+        "braindrain-cc.warningThreshold": {
+          "type": "number",
+          "default": 60,
+          "description": "Percentage at which the indicator turns yellow"
+        },
+        "braindrain-cc.dangerThreshold": {
+          "type": "number",
+          "default": 80,
+          "description": "Percentage at which the indicator turns red"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}
