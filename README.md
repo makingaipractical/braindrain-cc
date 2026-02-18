@@ -42,7 +42,7 @@ Easy:
 Run:
 
 ```bash
-code --install-extension braindrain-cc-0.1.0.vsix
+code --install-extension braindrain-cc-0.3.0.vsix
 ```
 
 Restart any running Claude Code sessions. That's it — the extension sets up everything automatically.
@@ -57,11 +57,15 @@ Claude Code has a statusline feature that exposes context window data as JSON. B
 
 2. **Extension** — polls `~/.claude/braindrain/` every 15 seconds, finds the session file that matches your current VS Code workspace, and displays the percentage in the status bar.
 
+BrainDrain CC calculates context usage from both input and output tokens. Claude Code's built-in `/context` command only counts input tokens, which means it can report free space remaining when you're effectively at the limit. BrainDrain's percentage more closely matches the "Context low (X% remaining)" warning that Claude Code displays at the bottom of the terminal.
+
 This means **multiple Claude Code sessions work simultaneously**. Each session writes its own file, and each VS Code window shows the data for its own project. No conflicts, no per-project config files, nothing to gitignore.
+
+**One session per project directory.** If you run two Claude Code sessions in the same project directory, BrainDrain shows the most recent one. It matches sessions to VS Code windows by working directory.
 
 ## Requirements
 
-- VS Code 1.85+
+- VS Code 1.93+
 - Claude Code CLI
 - Python 3 (used by the bridge script to parse JSON)
 
@@ -82,6 +86,14 @@ BrainDrain CC doesn't track tokens or anything else to keep it simple, but let m
 ## Not affiliated with Anthropic
 
 This is a community tool. Not made by, endorsed by, or affiliated with Anthropic.
+
+## Version History
+
+**v0.3.0** — Accurate context percentage (includes output tokens, matching Claude Code's "Context low" warning rather than the input-only `/context` number). Stale session cleanup (files older than 36h removed on activation). Session tracking via Terminal Shell Integration API (VS Code 1.93+).
+
+**v0.2.0** — Multi-session support, three display states (active/stale/no session), auto-setup of bridge script and settings.
+
+**v0.1.0** — Initial release. Single-session context display.
 
 ## Development Notes
 
