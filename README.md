@@ -1,48 +1,33 @@
 # BrainDrain CC
 
-Easily see your context window filling up while using Claude Code in VS Code without having to type `/context`.
+Easily see your context window percentage while using Claude Code in VS Code. More accurate than `/context` by including output tokens.
 
 ![BrainDrain CC status bar green](images/status-bar-green.png)
 
-
-The icon and percentage are 🟢 Green when fine, 🟡 Yellow when filling up. 
-
+The icon and percentage are 🟢 Green when fine, 🟡 Yellow when filling up.
 
 ![BrainDrain CC status bar yellow](images/status-bar-yellow.png)
 
-🔴 Red when nearly full. 
-
+🔴 Red when nearly full.
 
 ![BrainDrain CC status bar red](images/status-bar-red.png)
 
-BrainDrain CC works across multiple sessions without any problems. You can work in Claude Code from two different sessions and see the percentage fill for the context window in each workspace.
-
+Supports multiple concurrent Claude Code sessions, one per project directory. Each VS Code window displays context for its own workspace.
 
 ![BrainDrain CC multi-session support](images/multi-session.png)
 
 The ⊘ icon appears after 5 minutes of inactivity and automatically updates as soon as you send a message again.
 
-
 ![BrainDrain CC inactive tooltip](images/tooltip-inactive.png)
-
-
-## Use Case
-
-You use VS Code and the Claude Code extension in the CLI, and you want an easy way to see how full your context window is within the VS Code status bar.
-
-I use context carefully and often find it hard to find a moment to type `/context`. This extension adds a brain icon and percentage so you can always see how full the context window is and plan accordingly. 
 
 ## Install
 
-Easiest:
+Download the latest `.vsix` from the [Releases page](https://github.com/makingaipractical/braindrain-cc/releases), then install it through the extensions panel: click the three dots and select "Install from VSIX."
 
-Download the latest `.vsix` from the [Releases page](https://github.com/makingaipractical/braindrain-cc/releases), then install it through the extensions panel: Click on three dots and then "install from VSIX"
-
-Easy: 
-Run:
+Or from the command line:
 
 ```bash
-code --install-extension braindrain-cc-0.3.0.vsix
+code --install-extension braindrain-cc-<version>.vsix
 ```
 
 Restart any running Claude Code sessions. That's it — the extension sets up everything automatically.
@@ -58,10 +43,6 @@ Claude Code has a statusline feature that exposes context window data as JSON. B
 2. **Extension** — polls `~/.claude/braindrain/` every 15 seconds, finds the session file that matches your current VS Code workspace, and displays the percentage in the status bar.
 
 BrainDrain CC calculates context usage from both input and output tokens. Claude Code's built-in `/context` command only counts input tokens, which means it can report free space remaining when you're effectively at the limit. BrainDrain's percentage more closely matches the "Context low (X% remaining)" warning that Claude Code displays at the bottom of the terminal.
-
-This means **multiple Claude Code sessions work simultaneously**. Each session writes its own file, and each VS Code window shows the data for its own project. No conflicts, no per-project config files, nothing to gitignore.
-
-**One session per project directory.** If you run two Claude Code sessions in the same project directory, BrainDrain shows the most recent one. It matches sessions to VS Code windows by working directory.
 
 ## Requirements
 
@@ -81,7 +62,7 @@ This means **multiple Claude Code sessions work simultaneously**. Each session w
 
 ## Feedback
 
-BrainDrain CC doesn't track tokens or anything else to keep it simple, but let me know if you want something else. I will keep updating this until it doesn't need to exist anymore.
+BrainDrain CC computes context percentage locally from Claude Code's statusline data — no API calls, no telemetry, no runtime dependencies. Let me know if you want something else. I will keep updating this until it doesn't need to exist anymore.
 
 ## Not affiliated with Anthropic
 
@@ -97,7 +78,7 @@ This is a community tool. Not made by, endorsed by, or affiliated with Anthropic
 
 ## Development Notes
 
-Designed by a human, coded by Claude. It took one evening.
+Designed by a human, coded by Claude.
 
 > This was a satisfying build. The problem was clear, the architecture was clean, and nothing was wasted. No framework, no bundler, no runtime dependencies. ~130 lines that do one thing well.
 >
