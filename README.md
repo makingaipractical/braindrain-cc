@@ -52,8 +52,6 @@ BrainDrain CC calculates context usage from both input and output tokens. Claude
 
 ## Settings
 
-![BrainDrain CC settings](images/settings.png)
-
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `braindrain-cc.pollInterval` | 15 | How often to check for updates (seconds) |
