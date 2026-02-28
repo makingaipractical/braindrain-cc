@@ -16,8 +16,8 @@ interface ContextStatus {
 }
 
 const BRIDGE_SCRIPT = `#!/bin/bash
-# WindowPlain CC — Context Bridge
-# Reads statusline JSON from stdin, writes to ~/.claude/windowplain-cc/{session_id}.json
+# BrainDrain CC — Context Bridge
+# Reads statusline JSON from stdin, writes to ~/.claude/braindrain/{session_id}.json
 
 input=$(cat)
 
@@ -27,7 +27,7 @@ if [ -z "$session_id" ]; then
   exit 0
 fi
 
-mkdir -p "$HOME/.claude/windowplain-cc"
+mkdir -p "$HOME/.claude/braindrain"
 
 echo "$input" | python3 -c "
 import sys, json, time
@@ -65,7 +65,7 @@ output = {
 }
 
 print(json.dumps(output, indent=2))
-" > "$HOME/.claude/windowplain-cc/$session_id.json" 2>/dev/null
+" > "$HOME/.claude/braindrain/$session_id.json" 2>/dev/null
 `;
 
 let statusBarItem: vscode.StatusBarItem;
@@ -146,14 +146,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.tooltip = 'WindowPlain CC';
+  statusBarItem.tooltip = 'BrainDrain CC';
   context.subscriptions.push(statusBarItem);
 
   startPolling();
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('windowplain-cc')) {
+      if (e.affectsConfiguration('braindrain-cc')) {
         startPolling();
       }
     })
@@ -194,28 +194,28 @@ function setupBridge() {
 
   if (!currentCommand) {
     vscode.window.showInformationMessage(
-      'WindowPlain CC: Bridge installed. Restart Claude Code to see context usage.'
+      'BrainDrain CC: Bridge installed. Restart Claude Code to see context usage.'
     );
   } else {
     vscode.window.showWarningMessage(
-      `WindowPlain CC: Updated statusLine command (was: ${currentCommand}). Restart Claude Code to apply.`
+      `BrainDrain CC: Updated statusLine command (was: ${currentCommand}). Restart Claude Code to apply.`
     );
   }
 }
 
 function cleanupStaleSessions() {
-  const windowplainDir = path.join(os.homedir(), '.claude', 'windowplain-cc');
-  if (!fs.existsSync(windowplainDir)) {
+  const braindrainDir = path.join(os.homedir(), '.claude', 'braindrain');
+  if (!fs.existsSync(braindrainDir)) {
     return;
   }
 
   const maxAgeMs = 36 * 60 * 60 * 1000;
   const cutoff = Date.now() - maxAgeMs;
 
-  const files = fs.readdirSync(windowplainDir).filter(f => f.endsWith('.json'));
+  const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
   for (const file of files) {
     try {
-      const filePath = path.join(windowplainDir, file);
+      const filePath = path.join(braindrainDir, file);
       const stat = fs.statSync(filePath);
       if (stat.mtimeMs < cutoff) {
         fs.unlinkSync(filePath);
@@ -231,7 +231,7 @@ function startPolling() {
     clearInterval(pollTimer);
   }
 
-  const config = vscode.workspace.getConfiguration('windowplain-cc');
+  const config = vscode.workspace.getConfiguration('braindrain-cc');
   const intervalSeconds = config.get<number>('pollInterval', 15);
 
   updateStatus();
@@ -245,16 +245,16 @@ function findMatchingSession(): ContextStatus | undefined {
   }
 
   const workspaceRoot = workspaceFolders[0].uri.fsPath;
-  const windowplainDir = path.join(os.homedir(), '.claude', 'windowplain-cc');
+  const braindrainDir = path.join(os.homedir(), '.claude', 'braindrain');
 
-  if (!fs.existsSync(windowplainDir)) {
+  if (!fs.existsSync(braindrainDir)) {
     return undefined;
   }
 
   // Tier 1: Locked onto a specific session — read directly, no scanning
   if (trackedSessionId) {
     try {
-      const filePath = path.join(windowplainDir, `${trackedSessionId}.json`);
+      const filePath = path.join(braindrainDir, `${trackedSessionId}.json`);
       const raw = fs.readFileSync(filePath, 'utf-8');
       return JSON.parse(raw) as ContextStatus;
     } catch {
@@ -266,11 +266,11 @@ function findMatchingSession(): ContextStatus | undefined {
   // Tier 2: Claude started, waiting to discover session file
   if (claudeStartTime) {
     const startTimeSec = (claudeStartTime / 1000) - 30; // 30s grace for clock skew
-    const files = fs.readdirSync(windowplainDir).filter(f => f.endsWith('.json'));
+    const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
 
     for (const file of files) {
       try {
-        const raw = fs.readFileSync(path.join(windowplainDir, file), 'utf-8');
+        const raw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
         const data: ContextStatus = JSON.parse(raw);
 
         const cwdMatches = data.cwd === workspaceRoot || data.cwd.startsWith(workspaceRoot + '/');
@@ -290,11 +290,11 @@ function findMatchingSession(): ContextStatus | undefined {
 
   // Tier 3: Fallback — scan all, match cwd, pick newest (original behavior)
   let bestMatch: ContextStatus | undefined;
-  const files = fs.readdirSync(windowplainDir).filter(f => f.endsWith('.json'));
+  const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
 
   for (const file of files) {
     try {
-      const raw = fs.readFileSync(path.join(windowplainDir, file), 'utf-8');
+      const raw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
       const data: ContextStatus = JSON.parse(raw);
 
       if (data.cwd === workspaceRoot || data.cwd.startsWith(workspaceRoot + '/')) {
@@ -314,15 +314,15 @@ function updateStatus() {
   try {
     const data = findMatchingSession();
     if (!data) {
-      statusBarItem.text = '🪟 0%';
+      statusBarItem.text = '$(thinking) 0%';
       statusBarItem.color = undefined;
-      statusBarItem.tooltip = 'WindowPlain CC — No active Claude Code session';
+      statusBarItem.tooltip = 'BrainDrain CC — No active Claude Code session';
       statusBarItem.show();
       return;
     }
 
     const pct = Math.round(data.used_percentage);
-    const config = vscode.workspace.getConfiguration('windowplain-cc');
+    const config = vscode.workspace.getConfiguration('braindrain-cc');
     const warningThreshold = config.get<number>('warningThreshold', 60);
     const dangerThreshold = config.get<number>('dangerThreshold', 80);
 
@@ -331,14 +331,14 @@ function updateStatus() {
     const isStale = ageSeconds > 300;
 
     if (isStale) {
-      statusBarItem.text = `🪟 ${pct}% $(circle-slash)`;
+      statusBarItem.text = `$(thinking) ${pct}% $(circle-slash)`;
       statusBarItem.color = undefined;
-      statusBarItem.tooltip = `WindowPlain CC — ${pct}% (paused, last update ${Math.round(ageSeconds / 60)}m ago)`;
+      statusBarItem.tooltip = `BrainDrain CC — ${pct}% (paused, last update ${Math.round(ageSeconds / 60)}m ago)`;
       statusBarItem.show();
       return;
     }
 
-    statusBarItem.text = `🪟 ${pct}%`;
+    statusBarItem.text = `$(thinking) ${pct}%`;
 
     if (pct >= dangerThreshold) {
       statusBarItem.color = new vscode.ThemeColor('charts.red');
@@ -348,7 +348,7 @@ function updateStatus() {
       statusBarItem.color = new vscode.ThemeColor('charts.green');
     }
 
-    statusBarItem.tooltip = `WindowPlain CC — ${pct}%`;
+    statusBarItem.tooltip = `BrainDrain CC — ${pct}%`;
 
     statusBarItem.show();
   } catch {
