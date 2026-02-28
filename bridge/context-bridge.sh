@@ -1,6 +1,6 @@
 #!/bin/bash
-# BrainDrain CC — Context Bridge
-# Reads statusline JSON from stdin, writes to ~/.claude/braindrain/{session_id}.json
+# WindowPlain CC — Context Bridge
+# Reads statusline JSON from stdin, writes to ~/.claude/windowplain-cc/{session_id}.json
 # Configure in ~/.claude/settings.json:
 #   "statusLine": { "type": "command", "command": "/path/to/context-bridge.sh" }
 
@@ -12,7 +12,7 @@ if [ -z "$session_id" ]; then
   exit 0
 fi
 
-mkdir -p "$HOME/.claude/braindrain"
+mkdir -p "$HOME/.claude/windowplain-cc"
 
 echo "$input" | python3 -c "
 import sys, json, time
@@ -33,4 +33,4 @@ output = {
 }
 
 print(json.dumps(output, indent=2))
-" > "$HOME/.claude/braindrain/$session_id.json" 2>/dev/null
+" > "$HOME/.claude/windowplain-cc/$session_id.json" 2>/dev/null

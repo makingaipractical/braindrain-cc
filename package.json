@@ -1,12 +1,12 @@
 {
-  "name": "braindrain-cc",
-  "displayName": "BrainDrain CC",
+  "name": "windowplain-cc",
+  "displayName": "WindowPlain CC",
   "description": "Context window usage meter for Claude Code — always visible in your status bar",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "makingaipractical",
   "repository": {
     "type": "git",
-    "url": "https://github.com/makingaipractical/braindrain-cc"
+    "url": "https://github.com/makingaipractical/windowplain-cc"
   },
   "engines": {
     "vscode": "^1.93.0"
@@ -20,19 +20,19 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "BrainDrain CC",
+      "title": "WindowPlain CC",
       "properties": {
-        "braindrain-cc.pollInterval": {
+        "windowplain-cc.pollInterval": {
           "type": "number",
           "default": 15,
           "description": "How often to check for context updates (in seconds)"
         },
-        "braindrain-cc.warningThreshold": {
+        "windowplain-cc.warningThreshold": {
           "type": "number",
           "default": 60,
           "description": "Percentage at which the indicator turns yellow"
         },
-        "braindrain-cc.dangerThreshold": {
+        "windowplain-cc.dangerThreshold": {
           "type": "number",
           "default": 80,
           "description": "Percentage at which the indicator turns red"

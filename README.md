@@ -1,33 +1,33 @@
-# BrainDrain CC
+# WindowPlain CC
 
 Easily see your context window percentage while using Claude Code in VS Code. More accurate than `/context` by including output tokens.
 
-![BrainDrain CC status bar green](images/status-bar-green.png)
+![WindowPlain CC status bar green](images/status-bar-green.png)
 
 The icon and percentage are 🟢 Green when fine, 🟡 Yellow when filling up.
 
-![BrainDrain CC status bar yellow](images/status-bar-yellow.png)
+![WindowPlain CC status bar yellow](images/status-bar-yellow.png)
 
 🔴 Red when nearly full.
 
-![BrainDrain CC status bar red](images/status-bar-red.png)
+![WindowPlain CC status bar red](images/status-bar-red.png)
 
 Supports multiple concurrent Claude Code sessions, one per project directory. Each VS Code window displays context for its own workspace.
 
-![BrainDrain CC multi-session support](images/multi-session.png)
+![WindowPlain CC multi-session support](images/multi-session.png)
 
 The ⊘ icon appears after 5 minutes of inactivity and automatically updates as soon as you send a message again.
 
-![BrainDrain CC inactive tooltip](images/tooltip-inactive.png)
+![WindowPlain CC inactive tooltip](images/tooltip-inactive.png)
 
 ## Install
 
-Download the latest `.vsix` from the [Releases page](https://github.com/makingaipractical/braindrain-cc/releases), then install it through the extensions panel: click the three dots and select "Install from VSIX."
+Download the latest `.vsix` from the [Releases page](https://github.com/makingaipractical/windowplain-cc/releases), then install it through the extensions panel: click the three dots and select "Install from VSIX."
 
 Or from the command line:
 
 ```bash
-code --install-extension braindrain-cc-<version>.vsix
+code --install-extension windowplain-cc-<version>.vsix
 ```
 
 Restart any running Claude Code sessions. That's it — the extension sets up everything automatically.
@@ -36,13 +36,13 @@ Restart any running Claude Code sessions. That's it — the extension sets up ev
 
 ## How it works
 
-Claude Code has a statusline feature that exposes context window data as JSON. BrainDrain CC uses this in two parts:
+Claude Code has a statusline feature that exposes context window data as JSON. WindowPlain CC uses this in two parts:
 
-1. **Bridge script** — automatically installed to `~/.claude/scripts/context-bridge.sh` on first run. Claude Code pipes context data to this script, which writes a small JSON file to `~/.claude/braindrain/` (one file per session, named by session ID).
+1. **Bridge script** — automatically installed to `~/.claude/scripts/context-bridge.sh` on first run. Claude Code pipes context data to this script, which writes a small JSON file to `~/.claude/windowplain-cc/` (one file per session, named by session ID).
 
-2. **Extension** — polls `~/.claude/braindrain/` every 15 seconds, finds the session file that matches your current VS Code workspace, and displays the percentage in the status bar.
+2. **Extension** — polls `~/.claude/windowplain-cc/` every 15 seconds, finds the session file that matches your current VS Code workspace, and displays the percentage in the status bar.
 
-BrainDrain CC calculates context usage from both input and output tokens. Claude Code's built-in `/context` command only counts input tokens, which means it can report free space remaining when you're effectively at the limit. BrainDrain's percentage more closely matches the "Context low (X% remaining)" warning that Claude Code displays at the bottom of the terminal.
+WindowPlain CC calculates context usage from both input and output tokens. Claude Code's built-in `/context` command only counts input tokens, which means it can report free space remaining when you're effectively at the limit. WindowPlain CC's percentage more closely matches the "Context low (X% remaining)" warning that Claude Code displays at the bottom of the terminal.
 
 ## Requirements
 
@@ -54,19 +54,21 @@ BrainDrain CC calculates context usage from both input and output tokens. Claude
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `braindrain-cc.pollInterval` | 15 | How often to check for updates (seconds) |
-| `braindrain-cc.warningThreshold` | 60 | % at which indicator turns yellow |
-| `braindrain-cc.dangerThreshold` | 80 | % at which indicator turns red |
+| `windowplain-cc.pollInterval` | 15 | How often to check for updates (seconds) |
+| `windowplain-cc.warningThreshold` | 60 | % at which indicator turns yellow |
+| `windowplain-cc.dangerThreshold` | 80 | % at which indicator turns red |
 
 ## Feedback
 
-BrainDrain CC computes context percentage locally from Claude Code's statusline data — no API calls, no telemetry, no runtime dependencies. Let me know if you want something else. I will keep updating this until it doesn't need to exist anymore.
+WindowPlain CC computes context percentage locally from Claude Code's statusline data — no API calls, no telemetry, no runtime dependencies. Let me know if you want something else. I will keep updating this until it doesn't need to exist anymore.
 
 ## Not affiliated with Anthropic
 
 This is a community tool. Not made by, endorsed by, or affiliated with Anthropic.
 
 ## Version History
+
+**v0.4.0** — Renamed to WindowPlain CC (formerly BrainDrain CC). New status bar icon.
 
 **v0.3.0** — Accurate context percentage (includes output tokens, matching Claude Code's "Context low" warning rather than the input-only `/context` number). Stale session cleanup (files older than 36h removed on activation). Session tracking via Terminal Shell Integration API (VS Code 1.93+).
 
