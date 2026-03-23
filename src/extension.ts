@@ -5,6 +5,7 @@ import * as os from 'os';
 
 interface ContextStatus {
   cwd: string;
+  project_dir: string;
   used_percentage: number;
   remaining_percentage: number;
   total_input_tokens: number;
@@ -21,13 +22,16 @@ const BRIDGE_SCRIPT = `#!/bin/bash
 
 input=$(cat)
 
-session_id=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>/dev/null)
+BD_DIR="$HOME/.claude/braindrain"
+BD_LOG="$BD_DIR/bridge.log"
+mkdir -p "$BD_DIR"
+
+session_id=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>>"$BD_LOG")
 
 if [ -z "$session_id" ]; then
+  echo "[$(date -Iseconds)] No session_id in input" >> "$BD_LOG"
   exit 0
 fi
-
-mkdir -p "$HOME/.claude/braindrain"
 
 echo "$input" | python3 -c "
 import sys, json, time
@@ -52,8 +56,13 @@ else:
     used_pct = cw.get('used_percentage', 0) or 0
     remaining_pct = cw.get('remaining_percentage', 100) or 100
 
+# Use workspace.project_dir (stable launch dir) with cwd as fallback
+ws = data.get('workspace', {})
+project_dir = ws.get('project_dir', '') or data.get('cwd', '')
+
 output = {
     'cwd': data.get('cwd', ''),
+    'project_dir': project_dir,
     'used_percentage': used_pct,
     'remaining_percentage': remaining_pct,
     'total_input_tokens': cw.get('total_input_tokens', 0),
@@ -65,7 +74,7 @@ output = {
 }
 
 print(json.dumps(output, indent=2))
-" > "$HOME/.claude/braindrain/$session_id.json" 2>/dev/null
+" > "$BD_DIR/$session_id.json" 2>>"$BD_LOG"
 `;
 
 let statusBarItem: vscode.StatusBarItem;
@@ -224,6 +233,19 @@ function cleanupStaleSessions() {
       // Skip files that can't be read or deleted
     }
   }
+
+  // Trim bridge log to last 50 lines
+  const logPath = path.join(braindrainDir, 'bridge.log');
+  try {
+    if (fs.existsSync(logPath)) {
+      const lines = fs.readFileSync(logPath, 'utf-8').split('\n');
+      if (lines.length > 50) {
+        fs.writeFileSync(logPath, lines.slice(-50).join('\n'));
+      }
+    }
+  } catch {
+    // Log trimming is best-effort
+  }
 }
 
 function startPolling() {
@@ -236,6 +258,12 @@ function startPolling() {
 
   updateStatus();
   pollTimer = setInterval(updateStatus, intervalSeconds * 1000);
+}
+
+function matchesWorkspace(data: ContextStatus, workspaceRoot: string): boolean {
+  // Prefer project_dir (stable launch directory) over cwd (can change mid-session)
+  const dir = data.project_dir || data.cwd;
+  return dir === workspaceRoot || dir.startsWith(workspaceRoot + '/');
 }
 
 function findMatchingSession(): ContextStatus | undefined {
@@ -273,8 +301,7 @@ function findMatchingSession(): ContextStatus | undefined {
         const raw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
         const data: ContextStatus = JSON.parse(raw);
 
-        const cwdMatches = data.cwd === workspaceRoot || data.cwd.startsWith(workspaceRoot + '/');
-        if (cwdMatches && data.timestamp >= startTimeSec) {
+        if (matchesWorkspace(data, workspaceRoot) && data.timestamp >= startTimeSec) {
           // Found it — lock on
           trackedSessionId = data.session_id;
           return data;
@@ -288,7 +315,7 @@ function findMatchingSession(): ContextStatus | undefined {
     return undefined;
   }
 
-  // Tier 3: Fallback — scan all, match cwd, pick newest (original behavior)
+  // Tier 3: Fallback — scan all, match workspace, pick newest
   let bestMatch: ContextStatus | undefined;
   const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
 
@@ -297,7 +324,7 @@ function findMatchingSession(): ContextStatus | undefined {
       const raw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
       const data: ContextStatus = JSON.parse(raw);
 
-      if (data.cwd === workspaceRoot || data.cwd.startsWith(workspaceRoot + '/')) {
+      if (matchesWorkspace(data, workspaceRoot)) {
         if (!bestMatch || data.timestamp > bestMatch.timestamp) {
           bestMatch = data;
         }

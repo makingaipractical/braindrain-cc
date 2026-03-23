@@ -2,7 +2,7 @@
   "name": "braindrain-cc",
   "displayName": "BrainDrain CC",
   "description": "Context window usage meter for Claude Code — always visible in your status bar",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "makingaipractical",
   "repository": {
     "type": "git",
