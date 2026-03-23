@@ -93,6 +93,8 @@ This is a community tool. Not made by, endorsed by, or affiliated with Anthropic
 
 ## Version History
 
+**v0.4.1** — Extension icon for Marketplace.
+
 **v0.4.0** — New status bar icons (Claude + lightbulb, cross-fork compatible). System overhead compensation for more accurate context percentage (`systemOverhead` setting). Works with both 200k and 1M context windows. Rewritten README.
 
 **v0.3.2** — Added search keywords for Marketplace discoverability.
