@@ -34,15 +34,27 @@ if [ -z "$session_id" ]; then
 fi
 
 echo "$input" | python3 -c "
-import sys, json, time
+import sys, json, time, os
 
 data = json.load(sys.stdin)
 cw = data.get('context_window', {})
 cu = cw.get('current_usage') or {}
 window_size = cw.get('context_window_size', 200000) or 200000
 
+# Read system overhead from config (written by VS Code extension)
+overhead = 18000
+config_path = os.path.join(os.path.expanduser('~'), '.claude', 'braindrain', 'config.json')
+try:
+    with open(config_path) as f:
+        cfg = json.load(f)
+        overhead = cfg.get('systemOverhead', 18000)
+except Exception:
+    pass
+
 # Compute percentage including output tokens for accurate effective usage
 # (used_percentage from Claude Code is input-only and underreports at high context)
+# Subtract system overhead from window size to account for invisible tokens
+# (system prompt, tool definitions, MCP configs, CLAUDE.md)
 inp = cu.get('input_tokens', 0) or 0
 out = cu.get('output_tokens', 0) or 0
 cache_create = cu.get('cache_creation_input_tokens', 0) or 0
@@ -50,7 +62,8 @@ cache_read = cu.get('cache_read_input_tokens', 0) or 0
 total = inp + out + cache_create + cache_read
 
 if total > 0 and window_size > 0:
-    used_pct = min(100.0, total * 100.0 / window_size)
+    effective_window = max(1, window_size - overhead)
+    used_pct = min(100.0, total * 100.0 / effective_window)
     remaining_pct = max(0.0, 100.0 - used_pct)
 else:
     used_pct = cw.get('used_percentage', 0) or 0
@@ -146,8 +159,23 @@ function setupTerminalTracking(context: vscode.ExtensionContext) {
   );
 }
 
+function writeBridgeConfig() {
+  const braindrainDir = path.join(os.homedir(), '.claude', 'braindrain');
+  const configPath = path.join(braindrainDir, 'config.json');
+  const config = vscode.workspace.getConfiguration('braindrain-cc');
+  const systemOverhead = config.get<number>('systemOverhead', 18000);
+
+  try {
+    fs.mkdirSync(braindrainDir, { recursive: true });
+    fs.writeFileSync(configPath, JSON.stringify({ systemOverhead }, null, 2) + '\n');
+  } catch {
+    // Config write is best-effort
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
   setupBridge();
+  writeBridgeConfig();
   cleanupStaleSessions();
   setupTerminalTracking(context);
 
@@ -163,6 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('braindrain-cc')) {
+        writeBridgeConfig();
         startPolling();
       }
     })
@@ -341,7 +370,7 @@ function updateStatus() {
   try {
     const data = findMatchingSession();
     if (!data) {
-      statusBarItem.text = '$(thinking) 0%';
+      statusBarItem.text = '$(claude)$(lightbulb-empty) 0%';
       statusBarItem.color = undefined;
       statusBarItem.tooltip = 'BrainDrain CC — No active Claude Code session';
       statusBarItem.show();
@@ -358,14 +387,14 @@ function updateStatus() {
     const isStale = ageSeconds > 300;
 
     if (isStale) {
-      statusBarItem.text = `$(thinking) ${pct}% $(circle-slash)`;
+      statusBarItem.text = `$(claude)$(lightbulb-empty) ${pct}% $(circle-slash)`;
       statusBarItem.color = undefined;
       statusBarItem.tooltip = `BrainDrain CC — ${pct}% (paused, last update ${Math.round(ageSeconds / 60)}m ago)`;
       statusBarItem.show();
       return;
     }
 
-    statusBarItem.text = `$(thinking) ${pct}%`;
+    statusBarItem.text = `$(claude)$(lightbulb-empty) ${pct}%`;
 
     if (pct >= dangerThreshold) {
       statusBarItem.color = new vscode.ThemeColor('charts.red');

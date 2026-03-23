@@ -2,7 +2,7 @@
   "name": "braindrain-cc",
   "displayName": "BrainDrain CC",
   "description": "Context window usage meter for Claude Code — always visible in your status bar",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "publisher": "makingaipractical",
   "repository": {
     "type": "git",
@@ -43,6 +43,11 @@
           "type": "number",
           "default": 80,
           "description": "Percentage at which the indicator turns red"
+        },
+        "braindrain-cc.systemOverhead": {
+          "type": "number",
+          "default": 18000,
+          "description": "Estimated system token overhead (system prompt, tools, MCP, CLAUDE.md). These tokens are invisible to the statusline but consume context. Increase if BrainDrain underreports compared to Claude Code's 'Context low' warning."
         }
       }
     }
