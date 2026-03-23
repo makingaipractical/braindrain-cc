@@ -68,6 +68,8 @@ This is a community tool. Not made by, endorsed by, or affiliated with Anthropic
 
 ## Version History
 
+**v0.3.2** — Added search keywords for Marketplace discoverability.
+
 **v0.3.1** — Stable workspace matching via `project_dir` (no more wrong-session pickup when switching models). Bridge error logging to `~/.claude/braindrain/bridge.log`. Now available on the VS Code Marketplace.
 
 **v0.3.0** — Accurate context percentage (includes output tokens, matching Claude Code's "Context low" warning rather than the input-only `/context` number). Stale session cleanup (files older than 36h removed on activation). Session tracking via Terminal Shell Integration API (VS Code 1.93+).

@@ -2,7 +2,7 @@
   "name": "braindrain-cc",
   "displayName": "BrainDrain CC",
   "description": "Context window usage meter for Claude Code — always visible in your status bar",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "publisher": "makingaipractical",
   "repository": {
     "type": "git",
@@ -11,6 +11,13 @@
   "engines": {
     "vscode": "^1.93.0"
   },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "context-window",
+    "ai",
+    "status-bar"
+  ],
   "categories": [
     "Other"
   ],
