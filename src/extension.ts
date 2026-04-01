@@ -107,6 +107,11 @@ function isClaudeCommand(commandLine: string): boolean {
 }
 
 function clearTracking() {
+  // Delete session file so Tier 3 doesn't pick up stale data
+  if (trackedSessionId) {
+    const filePath = path.join(os.homedir(), '.claude', 'braindrain', `${trackedSessionId}.json`);
+    try { fs.unlinkSync(filePath); } catch { /* already gone */ }
+  }
   trackedSessionId = undefined;
   trackedExecution = undefined;
   trackedTerminal = undefined;

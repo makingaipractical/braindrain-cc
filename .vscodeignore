@@ -4,3 +4,17 @@ src/**
 tsconfig.json
 **/*.map
 bridge/**
+
+# Old builds
+*.vsix
+
+# Unreferenced images (kept in repo, excluded from package)
+images/settings.png
+images/tooltip-inactive.png
+images/multi-session.png
+images/status-bar-green.png
+images/status-bar-red.png
+images/status-bar-yellow.png
+
+# Redundant ignore file
+.vsixignore
