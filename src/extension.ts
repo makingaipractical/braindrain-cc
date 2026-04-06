@@ -92,6 +92,7 @@ print(json.dumps(output, indent=2))
 
 let statusBarItem: vscode.StatusBarItem;
 let pollTimer: NodeJS.Timeout | undefined;
+let cleanupTimer: NodeJS.Timeout | undefined;
 
 // Terminal Shell Integration tracking (VS Code 1.93+)
 let trackedSessionId: string | undefined;
@@ -140,6 +141,9 @@ function setupTerminalTracking(context: vscode.ExtensionContext) {
         }
       }
 
+      // Clean up previous tracking (handles missed onDidEnd events from /exit)
+      clearTracking();
+
       claudeStartTime = Date.now();
       trackedTerminal = event.terminal;
       trackedExecution = event.execution;
@@ -182,6 +186,7 @@ export function activate(context: vscode.ExtensionContext) {
   setupBridge();
   writeBridgeConfig();
   cleanupStaleSessions();
+  cleanupTimer = setInterval(cleanupStaleSessions, 60 * 60 * 1000); // Hourly
   setupTerminalTracking(context);
 
   statusBarItem = vscode.window.createStatusBarItem(
@@ -329,6 +334,7 @@ function findMatchingSession(): ContextStatus | undefined {
   if (claudeStartTime) {
     const startTimeSec = (claudeStartTime / 1000) - 30; // 30s grace for clock skew
     const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
+    let newestMatch: ContextStatus | undefined;
 
     for (const file of files) {
       try {
@@ -336,13 +342,18 @@ function findMatchingSession(): ContextStatus | undefined {
         const data: ContextStatus = JSON.parse(raw);
 
         if (matchesWorkspace(data, workspaceRoot) && data.timestamp >= startTimeSec) {
-          // Found it — lock on
-          trackedSessionId = data.session_id;
-          return data;
+          if (!newestMatch || data.timestamp > newestMatch.timestamp) {
+            newestMatch = data;
+          }
         }
       } catch {
         // Skip unreadable files
       }
+    }
+
+    if (newestMatch) {
+      trackedSessionId = newestMatch.session_id;
+      return newestMatch;
     }
 
     // Not found yet — keep waiting (return nothing rather than wrong session)
@@ -420,6 +431,9 @@ function updateStatus() {
 export function deactivate() {
   if (pollTimer) {
     clearInterval(pollTimer);
+  }
+  if (cleanupTimer) {
+    clearInterval(cleanupTimer);
   }
   clearTracking();
 }

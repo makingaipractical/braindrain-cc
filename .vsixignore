@@ -1,0 +1,19 @@
+# Old builds
+*.vsix
+
+# Unreferenced images (kept in repo, excluded from package)
+images/settings.png
+images/tooltip-inactive.png
+images/multi-session.png
+images/status-bar-green.png
+images/status-bar-red.png
+images/status-bar-yellow.png
+
+# Source (compiled output is in out/)
+src/
+
+# Dev config
+tsconfig.json
+
+# Bridge reference copy (embedded in extension.ts)
+bridge/
