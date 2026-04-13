@@ -93,6 +93,10 @@ This is a community tool. Not made by, endorsed by, or affiliated with Anthropic
 
 ## Version History
 
+**v0.4.4** — Handles `/clear` correctly. When Claude Code starts a new session in the same terminal, BrainDrain now detects the newer session and switches to it within one poll cycle.
+
+**v0.4.3** — Fixed stale session lock-in after `/exit`. Extension no longer stays stuck on a dead session when a new one starts for the same workspace.
+
 **v0.4.2** — Session file cleanup when Claude Code exits, preventing stale data from previous sessions. Slimmer package (removed unused images).
 
 **v0.4.1** — Extension icon for Marketplace.

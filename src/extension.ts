@@ -99,6 +99,7 @@ let trackedSessionId: string | undefined;
 let trackedExecution: vscode.TerminalShellExecution | undefined;
 let trackedTerminal: vscode.Terminal | undefined;
 let claudeStartTime: number | undefined;
+let lastTrackedTimestamp: number | undefined;
 
 function isClaudeCommand(commandLine: string): boolean {
   const firstToken = commandLine.trim().split(/\s+/)[0];
@@ -117,6 +118,7 @@ function clearTracking() {
   trackedExecution = undefined;
   trackedTerminal = undefined;
   claudeStartTime = undefined;
+  lastTrackedTimestamp = undefined;
 }
 
 function setupTerminalTracking(context: vscode.ExtensionContext) {
@@ -323,7 +325,37 @@ function findMatchingSession(): ContextStatus | undefined {
     try {
       const filePath = path.join(braindrainDir, `${trackedSessionId}.json`);
       const raw = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(raw) as ContextStatus;
+      const data = JSON.parse(raw) as ContextStatus;
+
+      // If the file hasn't updated since last poll, check whether /clear
+      // (or similar) created a new session for this workspace
+      if (lastTrackedTimestamp !== undefined && data.timestamp === lastTrackedTimestamp) {
+        const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
+        let hasNewer = false;
+        for (const file of files) {
+          try {
+            const otherRaw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
+            const other: ContextStatus = JSON.parse(otherRaw);
+            if (other.session_id !== trackedSessionId &&
+                matchesWorkspace(other, workspaceRoot) &&
+                other.timestamp > data.timestamp) {
+              hasNewer = true;
+              break;
+            }
+          } catch { /* skip */ }
+        }
+        if (hasNewer) {
+          // Release session lock but keep claudeStartTime (terminal still alive)
+          trackedSessionId = undefined;
+          lastTrackedTimestamp = undefined;
+          // Fall through to Tier 2/3 for rediscovery
+        } else {
+          return data;
+        }
+      } else {
+        lastTrackedTimestamp = data.timestamp;
+        return data;
+      }
     } catch {
       // File gone or unreadable — clear lock, fall through to Tier 3
       clearTracking();
@@ -353,6 +385,7 @@ function findMatchingSession(): ContextStatus | undefined {
 
     if (newestMatch) {
       trackedSessionId = newestMatch.session_id;
+      lastTrackedTimestamp = newestMatch.timestamp;
       return newestMatch;
     }
 
