@@ -1,12 +1,12 @@
 #!/bin/bash
-# BrainDrain CC — Context Bridge
-# Reads statusline JSON from stdin, writes to ~/.claude/braindrain/{session_id}.json
+# Claude Code Fuel Gauge — Context Bridge
+# Reads statusline JSON from stdin, writes to ~/.claude/fuel-gauge/{session_id}.json
 # Configure in ~/.claude/settings.json:
 #   "statusLine": { "type": "command", "command": "/path/to/context-bridge.sh" }
 
 input=$(cat)
 
-BD_DIR="$HOME/.claude/braindrain"
+BD_DIR="$HOME/.claude/fuel-gauge"
 BD_LOG="$BD_DIR/bridge.log"
 mkdir -p "$BD_DIR"
 

@@ -17,12 +17,12 @@ interface ContextStatus {
 }
 
 const BRIDGE_SCRIPT = `#!/bin/bash
-# BrainDrain CC — Context Bridge
-# Reads statusline JSON from stdin, writes to ~/.claude/braindrain/{session_id}.json
+# Claude Code Fuel Gauge — Context Bridge
+# Reads statusline JSON from stdin, writes to ~/.claude/fuel-gauge/{session_id}.json
 
 input=$(cat)
 
-BD_DIR="$HOME/.claude/braindrain"
+BD_DIR="$HOME/.claude/fuel-gauge"
 BD_LOG="$BD_DIR/bridge.log"
 mkdir -p "$BD_DIR"
 
@@ -43,7 +43,7 @@ window_size = cw.get('context_window_size', 200000) or 200000
 
 # Read system overhead from config (written by VS Code extension)
 overhead = 18000
-config_path = os.path.join(os.path.expanduser('~'), '.claude', 'braindrain', 'config.json')
+config_path = os.path.join(os.path.expanduser('~'), '.claude', 'fuel-gauge', 'config.json')
 try:
     with open(config_path) as f:
         cfg = json.load(f)
@@ -111,7 +111,7 @@ function isClaudeCommand(commandLine: string): boolean {
 function clearTracking() {
   // Delete session file so Tier 3 doesn't pick up stale data
   if (trackedSessionId) {
-    const filePath = path.join(os.homedir(), '.claude', 'braindrain', `${trackedSessionId}.json`);
+    const filePath = path.join(os.homedir(), '.claude', 'fuel-gauge', `${trackedSessionId}.json`);
     try { fs.unlinkSync(filePath); } catch { /* already gone */ }
   }
   trackedSessionId = undefined;
@@ -171,13 +171,13 @@ function setupTerminalTracking(context: vscode.ExtensionContext) {
 }
 
 function writeBridgeConfig() {
-  const braindrainDir = path.join(os.homedir(), '.claude', 'braindrain');
-  const configPath = path.join(braindrainDir, 'config.json');
-  const config = vscode.workspace.getConfiguration('braindrain-cc');
+  const fuelGaugeDir = path.join(os.homedir(), '.claude', 'fuel-gauge');
+  const configPath = path.join(fuelGaugeDir, 'config.json');
+  const config = vscode.workspace.getConfiguration('fuel-gauge');
   const systemOverhead = config.get<number>('systemOverhead', 18000);
 
   try {
-    fs.mkdirSync(braindrainDir, { recursive: true });
+    fs.mkdirSync(fuelGaugeDir, { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify({ systemOverhead }, null, 2) + '\n');
   } catch {
     // Config write is best-effort
@@ -195,14 +195,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.tooltip = 'BrainDrain CC';
+  statusBarItem.tooltip = 'Claude Code Fuel Gauge';
   context.subscriptions.push(statusBarItem);
 
   startPolling();
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('braindrain-cc')) {
+      if (e.affectsConfiguration('fuel-gauge')) {
         writeBridgeConfig();
         startPolling();
       }
@@ -244,28 +244,28 @@ function setupBridge() {
 
   if (!currentCommand) {
     vscode.window.showInformationMessage(
-      'BrainDrain CC: Bridge installed. Restart Claude Code to see context usage.'
+      'Fuel Gauge: Bridge installed. Restart Claude Code to see context usage.'
     );
   } else {
     vscode.window.showWarningMessage(
-      `BrainDrain CC: Updated statusLine command (was: ${currentCommand}). Restart Claude Code to apply.`
+      `Fuel Gauge: Updated statusLine command (was: ${currentCommand}). Restart Claude Code to apply.`
     );
   }
 }
 
 function cleanupStaleSessions() {
-  const braindrainDir = path.join(os.homedir(), '.claude', 'braindrain');
-  if (!fs.existsSync(braindrainDir)) {
+  const fuelGaugeDir = path.join(os.homedir(), '.claude', 'fuel-gauge');
+  if (!fs.existsSync(fuelGaugeDir)) {
     return;
   }
 
   const maxAgeMs = 36 * 60 * 60 * 1000;
   const cutoff = Date.now() - maxAgeMs;
 
-  const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
+  const files = fs.readdirSync(fuelGaugeDir).filter(f => f.endsWith('.json'));
   for (const file of files) {
     try {
-      const filePath = path.join(braindrainDir, file);
+      const filePath = path.join(fuelGaugeDir, file);
       const stat = fs.statSync(filePath);
       if (stat.mtimeMs < cutoff) {
         fs.unlinkSync(filePath);
@@ -276,7 +276,7 @@ function cleanupStaleSessions() {
   }
 
   // Trim bridge log to last 50 lines
-  const logPath = path.join(braindrainDir, 'bridge.log');
+  const logPath = path.join(fuelGaugeDir, 'bridge.log');
   try {
     if (fs.existsSync(logPath)) {
       const lines = fs.readFileSync(logPath, 'utf-8').split('\n');
@@ -294,7 +294,7 @@ function startPolling() {
     clearInterval(pollTimer);
   }
 
-  const config = vscode.workspace.getConfiguration('braindrain-cc');
+  const config = vscode.workspace.getConfiguration('fuel-gauge');
   const intervalSeconds = config.get<number>('pollInterval', 15);
 
   updateStatus();
@@ -314,27 +314,27 @@ function findMatchingSession(): ContextStatus | undefined {
   }
 
   const workspaceRoot = workspaceFolders[0].uri.fsPath;
-  const braindrainDir = path.join(os.homedir(), '.claude', 'braindrain');
+  const fuelGaugeDir = path.join(os.homedir(), '.claude', 'fuel-gauge');
 
-  if (!fs.existsSync(braindrainDir)) {
+  if (!fs.existsSync(fuelGaugeDir)) {
     return undefined;
   }
 
   // Tier 1: Locked onto a specific session — read directly, no scanning
   if (trackedSessionId) {
     try {
-      const filePath = path.join(braindrainDir, `${trackedSessionId}.json`);
+      const filePath = path.join(fuelGaugeDir, `${trackedSessionId}.json`);
       const raw = fs.readFileSync(filePath, 'utf-8');
       const data = JSON.parse(raw) as ContextStatus;
 
       // If the file hasn't updated since last poll, check whether /clear
       // (or similar) created a new session for this workspace
       if (lastTrackedTimestamp !== undefined && data.timestamp === lastTrackedTimestamp) {
-        const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
+        const files = fs.readdirSync(fuelGaugeDir).filter(f => f.endsWith('.json'));
         let hasNewer = false;
         for (const file of files) {
           try {
-            const otherRaw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
+            const otherRaw = fs.readFileSync(path.join(fuelGaugeDir, file), 'utf-8');
             const other: ContextStatus = JSON.parse(otherRaw);
             if (other.session_id !== trackedSessionId &&
                 matchesWorkspace(other, workspaceRoot) &&
@@ -365,12 +365,12 @@ function findMatchingSession(): ContextStatus | undefined {
   // Tier 2: Claude started, waiting to discover session file
   if (claudeStartTime) {
     const startTimeSec = (claudeStartTime / 1000) - 30; // 30s grace for clock skew
-    const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
+    const files = fs.readdirSync(fuelGaugeDir).filter(f => f.endsWith('.json'));
     let newestMatch: ContextStatus | undefined;
 
     for (const file of files) {
       try {
-        const raw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
+        const raw = fs.readFileSync(path.join(fuelGaugeDir, file), 'utf-8');
         const data: ContextStatus = JSON.parse(raw);
 
         if (matchesWorkspace(data, workspaceRoot) && data.timestamp >= startTimeSec) {
@@ -395,11 +395,11 @@ function findMatchingSession(): ContextStatus | undefined {
 
   // Tier 3: Fallback — scan all, match workspace, pick newest
   let bestMatch: ContextStatus | undefined;
-  const files = fs.readdirSync(braindrainDir).filter(f => f.endsWith('.json'));
+  const files = fs.readdirSync(fuelGaugeDir).filter(f => f.endsWith('.json'));
 
   for (const file of files) {
     try {
-      const raw = fs.readFileSync(path.join(braindrainDir, file), 'utf-8');
+      const raw = fs.readFileSync(path.join(fuelGaugeDir, file), 'utf-8');
       const data: ContextStatus = JSON.parse(raw);
 
       if (matchesWorkspace(data, workspaceRoot)) {
@@ -421,13 +421,13 @@ function updateStatus() {
     if (!data) {
       statusBarItem.text = '$(claude)$(lightbulb-empty) 0%';
       statusBarItem.color = undefined;
-      statusBarItem.tooltip = 'BrainDrain CC — No active Claude Code session';
+      statusBarItem.tooltip = 'Fuel Gauge — No active Claude Code session';
       statusBarItem.show();
       return;
     }
 
     const pct = Math.round(data.used_percentage);
-    const config = vscode.workspace.getConfiguration('braindrain-cc');
+    const config = vscode.workspace.getConfiguration('fuel-gauge');
     const warningThreshold = config.get<number>('warningThreshold', 60);
     const dangerThreshold = config.get<number>('dangerThreshold', 80);
 
@@ -438,7 +438,7 @@ function updateStatus() {
     if (isStale) {
       statusBarItem.text = `$(claude)$(lightbulb-empty) ${pct}% $(circle-slash)`;
       statusBarItem.color = undefined;
-      statusBarItem.tooltip = `BrainDrain CC — ${pct}% (paused, last update ${Math.round(ageSeconds / 60)}m ago)`;
+      statusBarItem.tooltip = `Fuel Gauge — ${pct}% (paused, last update ${Math.round(ageSeconds / 60)}m ago)`;
       statusBarItem.show();
       return;
     }
@@ -453,7 +453,7 @@ function updateStatus() {
       statusBarItem.color = new vscode.ThemeColor('charts.green');
     }
 
-    statusBarItem.tooltip = `BrainDrain CC — ${pct}%`;
+    statusBarItem.tooltip = `Fuel Gauge — ${pct}%`;
 
     statusBarItem.show();
   } catch {

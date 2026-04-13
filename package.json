@@ -1,13 +1,13 @@
 {
-  "name": "braindrain-cc",
-  "displayName": "BrainDrain CC",
-  "description": "Context window usage meter for Claude Code — always visible in your status bar",
-  "version": "0.4.4",
+  "name": "claude-code-fuel-gauge",
+  "displayName": "Claude Code Fuel Gauge",
+  "description": "A context meter for your context window",
+  "version": "0.5.0",
   "publisher": "makingaipractical",
   "icon": "images/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/makingaipractical/braindrain-cc"
+    "url": "https://github.com/makingaipractical/claude-code-fuel-gauge"
   },
   "engines": {
     "vscode": "^1.93.0"
@@ -16,8 +16,11 @@
     "claude",
     "claude-code",
     "context-window",
+    "context-meter",
+    "fuel-gauge",
     "ai",
-    "status-bar"
+    "status-bar",
+    "token-usage"
   ],
   "categories": [
     "Other"
@@ -28,27 +31,27 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "BrainDrain CC",
+      "title": "Claude Code Fuel Gauge",
       "properties": {
-        "braindrain-cc.pollInterval": {
+        "fuel-gauge.pollInterval": {
           "type": "number",
           "default": 15,
           "description": "How often to check for context updates (in seconds)"
         },
-        "braindrain-cc.warningThreshold": {
+        "fuel-gauge.warningThreshold": {
           "type": "number",
           "default": 60,
           "description": "Percentage at which the indicator turns yellow"
         },
-        "braindrain-cc.dangerThreshold": {
+        "fuel-gauge.dangerThreshold": {
           "type": "number",
           "default": 80,
           "description": "Percentage at which the indicator turns red"
         },
-        "braindrain-cc.systemOverhead": {
+        "fuel-gauge.systemOverhead": {
           "type": "number",
           "default": 18000,
-          "description": "Estimated system token overhead (system prompt, tools, MCP, CLAUDE.md). These tokens are invisible to the statusline but consume context. Increase if BrainDrain underreports compared to Claude Code's 'Context low' warning."
+          "description": "Estimated system token overhead (system prompt, tools, MCP, CLAUDE.md). These tokens are invisible to the statusline but consume context. Increase if Fuel Gauge underreports compared to Claude Code's 'Context low' warning."
         }
       }
     }
