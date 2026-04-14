@@ -419,7 +419,7 @@ function updateStatus() {
   try {
     const data = findMatchingSession();
     if (!data) {
-      statusBarItem.text = '$(claude)$(lightbulb-empty) 0%';
+      statusBarItem.text = '$(claude)$(dashboard) 0%';
       statusBarItem.color = undefined;
       statusBarItem.tooltip = 'Fuel Gauge — No active Claude Code session';
       statusBarItem.show();
@@ -436,14 +436,14 @@ function updateStatus() {
     const isStale = ageSeconds > 300;
 
     if (isStale) {
-      statusBarItem.text = `$(claude)$(lightbulb-empty) ${pct}% $(circle-slash)`;
+      statusBarItem.text = `$(claude)$(dashboard) ${pct}% $(circle-slash)`;
       statusBarItem.color = undefined;
       statusBarItem.tooltip = `Fuel Gauge — ${pct}% (paused, last update ${Math.round(ageSeconds / 60)}m ago)`;
       statusBarItem.show();
       return;
     }
 
-    statusBarItem.text = `$(claude)$(lightbulb-empty) ${pct}%`;
+    statusBarItem.text = `$(claude)$(dashboard) ${pct}%`;
 
     if (pct >= dangerThreshold) {
       statusBarItem.color = new vscode.ThemeColor('charts.red');
