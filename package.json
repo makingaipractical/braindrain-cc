@@ -2,7 +2,7 @@
   "name": "claude-code-fuel-gauge",
   "displayName": "Claude Code Fuel Gauge",
   "description": "A context meter for your context window",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "makingaipractical",
   "icon": "images/icon.png",
   "repository": {
